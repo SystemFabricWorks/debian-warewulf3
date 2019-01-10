@@ -1,0 +1,23 @@
+Source: warewulf3
+Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
+Section: utils
+Priority: extra
+Standards-Version: 3.9.8
+Build-Depends: debhelper (>= 10),
+               dh-autoreconf,
+
+Package: warewulf3-common
+Architecture: linux-any
+Depends: ${misc:Depends},
+         ${perl:Depens},
+Description: Common stuff
+ Common stuff for warewulf.
+
+Package: warewulf3-ipmi
+Architecture: linux-any
+Depends: warewulf3-common (=${binary:Version}),
+         ${misc:Depends},
+         ${perl:Depens},
+         ${shlibs:Depends},
+Description: IPMI stuff
+ IPMI stuff for warewulf.

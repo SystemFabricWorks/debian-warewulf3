@@ -1,0 +1,8 @@
+--- a/common/libexec/wwinit/10-database.init
++++ b/common/libexec/wwinit/10-database.init
+@@ -1,4 +1,4 @@
+-#!/bin/sh
++#!/bin/bash
+ ##
+ ## Copyright (c) 2001-2003 Gregory M. Kurtzer
+ ##

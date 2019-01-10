@@ -1,0 +1,37 @@
+--- a/ipmi/configure.ac
++++ b/ipmi/configure.ac
+@@ -23,14 +23,14 @@
+ AC_SUBST(PERL_VENDORLIB)
+ AC_SUBST(PERLBIN)
+ 
+-AC_PATH_PROG(WWCONFIGBIN, wwconfig)
++AC_PATH_PROG(WWCONFIGBIN, wwconfig, ,../common/bin)
+ if test -z "$WWCONFIGBIN"; then
+    AC_MSG_ERROR([wwconfig not found! (Warewulf common component)])
+ fi
+ AC_SUBST(WWCONFIGBIN)
+ 
+ AC_EXPAND_DIR(prefix, "${prefix}")
+-WAREWULF_PREFIX=`$WWCONFIGBIN PREFIX`
++WAREWULF_PREFIX=`perl -T -I ../common/lib $WWCONFIGBIN PREFIX`
+ force_prefix=""
+ AC_MSG_CHECKING([warewulf-common prefix vs. current prefix])
+ if test "${prefix}" = "$WAREWULF_PREFIX"; then
+@@ -41,7 +41,7 @@
+ fi
+ 
+ AC_MSG_CHECKING([for Warewulf's configuration for statedir])
+-eval `$WWCONFIGBIN -s statedir`
++eval `perl -T -I ../common/lib $WWCONFIGBIN -s statedir`
+ if test -z "$WAREWULF_STATEDIR"; then
+     AC_MSG_ERROR([Warewulf statedir not found])
+ fi
+@@ -50,7 +50,7 @@
+ AC_SUBST(WAREWULF_STATEDIR)
+ 
+ AC_MSG_CHECKING([for Warewulf's configuration for libexecdir])
+-eval `$WWCONFIGBIN -s libexecdir`
++eval `perl -T -I ../common/lib $WWCONFIGBIN -s libexecdir`
+ if test -z "$WAREWULF_LIBEXECDIR"; then
+     AC_MSG_ERROR([Warewulf libexecdir not found])
+ fi

@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+
+DESTDIR=$(CURDIR)/debian
+
+CONFIG_PATHS=--prefix=/usr \
+		--libexecdir=/usr/lib \
+		--sysconfdir=/etc \
+		--localstatedir=/var/lib
+
+%:
+	dh $@ --parallel --with autoreconf
+
+.PHONY: common
+common:
+	cd common && ./autogen.sh $(CONFIG_PATHS)
+	cd common && $(MAKE)
+
+.PHONY: override_dh_autoreconf
+override_dh_autoreconf: common
+	cd ipmi && ./autogen.sh $(CONFIG_PATHS)
+
+.PHONY: override_dh_auto_build
+override_dh_auto_build:
+	cd ipmi && $(MAKE)
+
+.PHONY: override_dh_auto_install
+override_dh_auto_install:
+	dh_auto_install
+	cd common && $(MAKE) DESTDIR=$(DESTDIR)/warewulf3-common install
+	cd ipmi && $(MAKE) DESTDIR=$(DESTDIR)/warewulf3-ipmi install
+
