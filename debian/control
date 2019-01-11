@@ -20,6 +20,13 @@ Depends: warewulf3-common (=${binary:Version}),
          ipmitool,
          ${misc:Depends},
          ${perl:Depends},
-         ${shlibs:Depends},
 Description: IPMI stuff
  IPMI stuff for warewulf.
+
+Package: warewulf3-vnfs
+Architecture: linux-any
+Depends: warewulf3-common (=${binary:Version}),
+         ${misc:Depends},
+         ${perl:Depends},
+Description: VNFS stuff
+ VNFS stuff for warewulf.

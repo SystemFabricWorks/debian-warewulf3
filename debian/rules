@@ -18,14 +18,18 @@ common:
 .PHONY: override_dh_autoreconf
 override_dh_autoreconf: common
 	cd ipmi && ./autogen.sh $(CONFIG_PATHS)
+	cd vnfs && ./autogen.sh $(CONFIG_PATHS)
 
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
 	cd ipmi && $(MAKE)
+	cd vnfs && $(MAKE)
 
 .PHONY: override_dh_auto_install
 override_dh_auto_install:
 	dh_auto_install
 	cd common && $(MAKE) DESTDIR=$(DESTDIR)/warewulf3-common install
 	cd ipmi && $(MAKE) DESTDIR=$(DESTDIR)/warewulf3-ipmi install
+	cd vnfs && $(MAKE) DESTDIR=$(DESTDIR)/warewulf3-vnfs install
+	cd $(DESTDIR)/warewulf3-vnfs/usr/lib/warewulf/wwmkchroot && chmod 0664 *.tmpl include-*
 
