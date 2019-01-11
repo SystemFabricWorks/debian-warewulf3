@@ -82,10 +82,10 @@ Description: Warewulf - Provisioning Module
 Package: warewulf3-provision-server
 Architecture: all
 Depends: apache2,
-         isc-dhcp-server,
+         dhcpd,
          libapache2-mod-perl2,
          policycoreutils-python-utils,
-         tftp-hpa,
+         tftpd-hpa,
          warewulf3-common (=${binary:Version}),
          ${misc:Depends},
          ${perl:Depends},
