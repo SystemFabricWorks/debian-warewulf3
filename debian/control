@@ -5,28 +5,85 @@ Priority: extra
 Standards-Version: 3.9.8
 Build-Depends: debhelper (>= 10),
                dh-autoreconf,
-			   ipmitool
 
 Package: warewulf3-common
-Architecture: linux-any
-Depends: ${misc:Depends},
+Architecture: all
+Depends: libdbd-mysql-perl,
+         libdbd-pg-perl,
+         libdbd-sqlite3-perl,
+         mariadb,
+         ${misc:Depends},
          ${perl:Depends},
-Description: Common stuff
- Common stuff for warewulf.
+Description: A suite of tools for clustering
+ Warewulf >= 3 is a set of utilities designed to better enable
+ utilization and maintenance of clusters or groups of computers.
+ .
+ This is the main package which includes the common libraries and
+ command line interface.
 
 Package: warewulf3-ipmi
-Architecture: linux-any
-Depends: warewulf3-common (=${binary:Version}),
-         ipmitool,
+Architecture: all
+Depends: ipmitool,
+         warewulf3-common (=${binary:Version}),
          ${misc:Depends},
          ${perl:Depends},
-Description: IPMI stuff
- IPMI stuff for warewulf.
+Description: IPMI Module for Warewulf
+ Warewulf >= 3 is a set of utilities designed to better enable
+ utilization and maintenance of clusters or groups of computers.
+ .
+ This is the IPMI module package. It contains Warewulf modules for
+ adding IPMI functionality.
+
+Package: warewulf3-provision
+Architecture: all
+Depends: busybox,
+         e2fsprogs (>=1.42),
+         ipxe,
+         libarchive13,
+         parted,
+         unionfs-fuse,
+         warewulf3-common (=${binary:Version}),
+         ${misc:Depends},
+         ${perl:Depends},
+Description: Warewulf - Provisioning Module
+ Warewulf >= 3 is a set of utilities designed to better enable
+ utilization and maintenance of clusters or groups of computers. The
+ provision module provides functionality for provisioning, configuring,
+ and booting systems.
+ .
+ This package contains the core provisioning components and
+ administrative tools. To actually provision systems, the
+ warewulf3-server package is also required.
+
+Package: warewulf3-server
+Architecture: all
+Depends: apache2,
+         isc-dhcp-server,
+         libapache2-mod-perl2,
+         policycoreutils-python-utils,
+         tftp-hpa,
+         warewulf3-common (=${binary:Version}),
+         ${misc:Depends},
+         ${perl:Depends},
+Description: Warewulf - Provisioning Module - Server
+ Warewulf >= 3 is a set of utilities designed to better enable
+ utilization and maintenance of clusters or groups of computers. The
+ provision module provides functionality for provisioning, configuring,
+ and booting systems.
+ .
+ This package contains the CGI scripts and event components to actually
+ provision systems. Systems used solely for administration of Warewulf
+ do not require this package.
 
 Package: warewulf3-vnfs
-Architecture: linux-any
+Architecture: all
 Depends: warewulf3-common (=${binary:Version}),
          ${misc:Depends},
          ${perl:Depends},
-Description: VNFS stuff
- VNFS stuff for warewulf.
+Description: Warewulf VNFS Module
+ Warewulf >= 3 is a set of utilities designed to better enable
+ utilization and maintenance of clusters or groups of computers.
+ .
+ This is the VNFS module which supports the creation and management of
+ Virtual Node FileSystem objects.
+

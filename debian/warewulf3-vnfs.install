@@ -1,0 +1,8 @@
+etc/warewulf/bootstrap.conf
+etc/warewulf/vnfs.conf
+usr/bin/wwbootstrap
+usr/bin/wwmkchroot
+usr/bin/wwvnfs
+usr/lib/warewulf/wwmkchroot
+usr/share/man/man1/wwbootstrap.1
+usr/share/man/man1/wwvnfs.1

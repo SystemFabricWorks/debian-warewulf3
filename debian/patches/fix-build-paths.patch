@@ -35,3 +35,31 @@
  if test -z "$WAREWULF_LIBEXECDIR"; then
      AC_MSG_ERROR([Warewulf libexecdir not found])
  fi
+--- a/provision/configure.ac
++++ b/provision/configure.ac
+@@ -5,14 +5,14 @@
+ AC_PROG_INSTALL
+ AM_INIT_AUTOMAKE([foreign -Wno-portability])
+ 
+-AC_PATH_PROG(WWCONFIGBIN, wwconfig)
++AC_PATH_PROG(WWCONFIGBIN, wwconfig, ,../common/bin)
+ if test -z "$WWCONFIGBIN"; then
+    AC_MSG_ERROR([wwconfig not found! (Warewulf common component)])
+ fi
+ AC_SUBST(WWCONFIGBIN)
+ 
+ AC_EXPAND_DIR(prefix, "${prefix}")
+-WAREWULF_PREFIX=`$WWCONFIGBIN PREFIX`
++WAREWULF_PREFIX=`perl -T -I ../common/lib $WWCONFIGBIN PREFIX`
+ force_prefix=""
+ AC_MSG_CHECKING([warewulf-common prefix vs. current prefix])
+ if test "${prefix}" = "$WAREWULF_PREFIX"; then
+@@ -25,7 +25,7 @@
+ AC_EXPAND_DIR(datadir, "${datadir}")
+ 
+ AC_MSG_CHECKING([for Warewulf's configuration for statedir])
+-eval `$WWCONFIGBIN -s statedir`
++eval `perl -T -I ../common/lib $WWCONFIGBIN -s statedir`
+ if test -z "$WAREWULF_STATEDIR"; then
+     AC_MSG_ERROR([Warewulf statedir not found])
+ fi

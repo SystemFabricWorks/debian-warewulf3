@@ -1,0 +1,16 @@
+--- a/ipmi/Makefile.am
++++ b/ipmi/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = lib 3rd_party initramfs
++SUBDIRS = lib
+ 
+ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure compile config.* ltmain.sh install-sh missing
+ DISTCLEANFILES = 
+--- a/provision/Makefile.am
++++ b/provision/Makefile.am
+@@ -1,4 +1,4 @@
+-SUBDIRS = lib initramfs etc bin cgi-bin share 3rd_party
++SUBDIRS = lib etc bin cgi-bin share
+ 
+ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure compile config.* install-sh missing
+ DISTCLEANFILES = 

@@ -1,3 +1,3 @@
 fix-bashisms.patch
 fix-build-paths.patch
-remove-ipmitool-build.patch
+remove-3rdparty-build.patch
