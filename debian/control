@@ -6,6 +6,31 @@ Standards-Version: 3.9.8
 Build-Depends: debhelper (>= 10),
                dh-autoreconf,
 
+Package: warewulf3-cluster
+Architecture: all
+Depends: warewulf3-common (=${binary:Version}),
+         warewulf3-provision (=${binary:Version}),
+         ${misc:Depends},
+         ${perl:Depends},
+Description: Tools used for clustering with Warewulf
+ Warewulf >= 3 is a set of utilities designed to better enable
+ utilization and maintenance of clusters or groups of computers.
+ .
+ This package contains tools to facilitate management of a Cluster
+ with Warewulf.
+
+Package: warewulf3-cluster-node
+Architecture: all
+Depends: util-linux (>=2.25),
+         ${misc:Depends},
+         ${perl:Depends},
+Description: Node tools used for clustering with Warewulf
+ Warewulf >= 3 is a set of utilities designed to better enable
+ utilization and maintenance of clusters or groups of computers.
+ .
+ This is the cluster-node module, that is installed onto the
+ provisioned nodes.
+
 Package: warewulf3-common
 Architecture: all
 Depends: libdbd-mysql-perl,
@@ -55,7 +80,7 @@ Description: Warewulf - Provisioning Module
  administrative tools. To actually provision systems, the
  warewulf3-server package is also required.
 
-Package: warewulf3-server
+Package: warewulf3-provision-server
 Architecture: all
 Depends: apache2,
          isc-dhcp-server,
@@ -86,4 +111,3 @@ Description: Warewulf VNFS Module
  .
  This is the VNFS module which supports the creation and management of
  Virtual Node FileSystem objects.
-

@@ -6,7 +6,8 @@ etc/warewulf/functions
 usr/bin/wwconfig
 usr/bin/wwinit
 usr/bin/wwsh
-usr/lib/warewulf/wwinit
+usr/lib/warewulf/wwinit/10-database.init
+usr/lib/warewulf/wwinit/25-wwsh.init
 usr/share/man/man1/wwsh.1
 usr/share/perl5/Warewulf/Config.pm
 usr/share/perl5/Warewulf/DSO.pm

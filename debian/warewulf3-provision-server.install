@@ -1,4 +1,4 @@
-etc/apache2/conf.d/warewulf-httpd.conf etc/apache2/sites-available/warewulf3.conf
+etc/apache2/conf.d/warewulf3-provision-server.conf etc/apache2/conf-available
 etc/warewulf/dhcpd-template.conf
 usr/lib/warewulf/cgi-bin
 usr/share/perl5/Warewulf/Event/Bootstrap.pm

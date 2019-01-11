@@ -1,0 +1,15 @@
+etc/profile.d/cluster-env.csh
+etc/profile.d/cluster-env.sh
+usr/bin/cluster-env
+usr/bin/wwuseradd
+usr/lib/warewulf/wwinit/30-domain.init
+usr/lib/warewulf/wwinit/40-authfiles.init
+usr/lib/warewulf/wwinit/50-dhcp.init
+usr/lib/warewulf/wwinit/50-nfsd.init
+usr/lib/warewulf/wwinit/50-ntpd.init
+usr/lib/warewulf/wwinit/50-ssh_keys.init
+usr/lib/warewulf/wwinit/50-tftp.init
+usr/lib/warewulf/wwinit/60-hostfile.init
+usr/lib/warewulf/wwinit/90-bootstrap.init
+usr/lib/warewulf/wwinit/91-vnfs.init
+usr/share/perl5/Warewulf/Module/Cli/Ssh.pm

@@ -1,0 +1,11 @@
+--- a/cluster/libexec/wwfirstboot/00-format.wwfb
++++ b/cluster/libexec/wwfirstboot/00-format.wwfb
+@@ -184,7 +184,7 @@
+             msg_yellow "Partition found with 'fill' size. Skipping any other partition defines.\n";
+             break 2;
+         fi
+-    done< <(echo $val | tr ':' ' ')  # while read
++    done < $(echo $val | tr ':' ' ')  # while read
+ 
+ done  # for v
+ 

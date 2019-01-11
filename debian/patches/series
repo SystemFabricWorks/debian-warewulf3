@@ -1,3 +1,6 @@
 fix-bashisms.patch
 fix-build-paths.patch
 remove-3rdparty-build.patch
+fix-00-format-syntax.patch
+fix-profile.d-paths.patch
+fix-wwfirstboot.patch

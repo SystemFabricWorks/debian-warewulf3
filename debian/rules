@@ -20,12 +20,14 @@ override_dh_autoreconf: common
 	cd ipmi && ./autogen.sh $(CONFIG_PATHS)
 	cd vnfs && ./autogen.sh $(CONFIG_PATHS)
 	cd provision && ./autogen.sh $(CONFIG_PATHS)
+	cd cluster && ./autogen.sh $(CONFIG_PATHS)
 
 .PHONY: override_dh_auto_build
 override_dh_auto_build:
 	$(MAKE) -C ipmi
 	$(MAKE) -C vnfs
 	$(MAKE) -C provision
+	$(MAKE) -C cluster
 
 .PHONY: override_dh_auto_install
 override_dh_auto_install:
@@ -35,4 +37,6 @@ override_dh_auto_install:
 	$(MAKE) -C vnfs DESTDIR=$(DESTDIR) install
 	cd $(DESTDIR)/usr/lib/warewulf/wwmkchroot && chmod 0664 *.tmpl include-*
 	$(MAKE) -C provision DESTDIR=$(DESTDIR) install
+	cd $(DESTDIR)/etc/apache2/conf.d && mv warewulf-httpd.conf warewulf3-provision-server.conf
+	$(MAKE) -C cluster DESTDIR=$(DESTDIR) install
 

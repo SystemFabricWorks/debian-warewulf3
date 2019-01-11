@@ -1,0 +1,3 @@
+etc/warewulf/vnfs/include/etc/rc.d/init.d/wwfirstboot etc/init.d/
+etc/warewulf/vnfs/include/etc/sysconfig/wwfirstboot.conf etc/
+etc/warewulf/vnfs/include/usr/lib/warewulf/wwfirstboot/00-format.wwfb usr/lib/warewulf/wwfirstboot/

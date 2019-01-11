@@ -1,0 +1,14 @@
+--- a/cluster/etc/wwfirstboot
++++ b/cluster/etc/wwfirstboot
+@@ -101,9 +101,9 @@
+ . /etc/init.d/functions
+ 
+ SUBSYSFILE="/var/lock/subsys/wwfirstboot";
+-CONFIG="/etc/sysconfig/wwfirstboot.conf";
++CONFIG="/etc/wwfirstboot.conf";
+ 
+-wwfbdir="/usr/libexec/warewulf/wwfirstboot";
++wwfbdir="/usr/lib/warewulf/wwfirstboot";
+ 
+ # What "run" are we doing.
+ # PRIMARY   == Initial call from chkconfig setup, starting at S05
