@@ -1,5 +1,16 @@
 --- a/cluster/etc/wwfirstboot
 +++ b/cluster/etc/wwfirstboot
+@@ -80,8 +80,8 @@
+ #
+ ### BEGIN INIT INFO
+ # Provides: wwfirstboot
+-# Required-Start: 
+-# Required-Stop:
++# Required-Start: $remote_fs
++# Required-Stop: $remote_fs
+ # Default-Start: 2 3 4 5
+ # Default-Stop: 0 1 6
+ # Short-Description: Start the firstboot checks
 @@ -101,9 +101,9 @@
  . /etc/init.d/functions
  
@@ -12,3 +23,22 @@
  
  # What "run" are we doing.
  # PRIMARY   == Initial call from chkconfig setup, starting at S05
+@@ -236,6 +236,18 @@
+     return $RETVAL;
+ }
+ 
++restart()
++{
++	echo "restart unsupported";
++	return 1;
++}
++
++force-reload()
++{
++	echo "force-reload unsupported";
++	return 1;
++}
++
+ ret=0;
+ while [ "$#" -gt "0" ]; do
+     case $1 in

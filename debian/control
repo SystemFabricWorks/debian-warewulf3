@@ -23,7 +23,6 @@ Package: warewulf3-cluster-node
 Architecture: all
 Depends: util-linux (>=2.25),
          ${misc:Depends},
-         ${perl:Depends},
 Description: Node tools used for clustering with Warewulf
  Warewulf >= 3 is a set of utilities designed to better enable
  utilization and maintenance of clusters or groups of computers.
