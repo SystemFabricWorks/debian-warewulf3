@@ -42,3 +42,14 @@
 +ethtool iproute2 iputils-ping iputils-arping net-tools linux-image-amd64"
 +
 +# vim:filetype=sh:syntax=sh:expandtab:ts=4:sw=4:
+--- a/vnfs/libexec/wwmkchroot/debian-8.tmpl
++++ b/vnfs/libexec/wwmkchroot/debian-8.tmpl
+@@ -9,7 +9,7 @@
+ DEB_MIRROR="http://http.us.debian.org/debian/"
+ 
+ # Install additional packages with debootstrap
+-PKGLIST="openssh-server openssh-client isc-dhcp-client,pciutils strace,nfs-common \
++PKGLIST="openssh-server openssh-client isc-dhcp-client pciutils strace nfs-common \
+ ethtool iproute iputils-ping iputils-arping net-tools firmware-bnx2 linux-image-amd64"
+ 
+ 
