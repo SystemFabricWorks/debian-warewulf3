@@ -13,8 +13,18 @@
  
      DEB_SRCS_DIRNAME=`dirname $DEB_SRCS`
      mkdir -m 0755 -p $CHROOTDIR/$DEB_SRCS_DIRNAME
+--- a/vnfs/libexec/wwmkchroot/Makefile.am
++++ b/vnfs/libexec/wwmkchroot/Makefile.am
+@@ -1,6 +1,6 @@
+ wwmkchrootdir = $(libexecdir)/warewulf/wwmkchroot
+ 
+-dist_wwmkchroot_SCRIPTS = centos-5.tmpl centos-6.tmpl centos-7.tmpl include-rhel rhel-generic.tmpl sl-5.tmpl sl-6.tmpl sl-7.tmpl functions include-deb debian-8.tmpl debian7-32.tmpl debian7-64.tmpl golden-system.tmpl include-suse opensuse-13.tmpl sles-11.tmpl sles-12.tmpl include-ubuntu ubuntu-16.04.tmpl
++dist_wwmkchroot_SCRIPTS = centos-5.tmpl centos-6.tmpl centos-7.tmpl include-rhel rhel-generic.tmpl sl-5.tmpl sl-6.tmpl sl-7.tmpl functions include-deb debian-8.tmpl debian7-32.tmpl debian7-64.tmpl debian-9.tmpl golden-system.tmpl include-suse opensuse-13.tmpl sles-11.tmpl sles-12.tmpl include-ubuntu ubuntu-16.04.tmpl
+  
+ 
+ MAINTAINERCLEANFILES = Makefile.in
 --- /dev/null
-+++ b/vnfs/libexec/wwmkchroot/debian9-64.tmpl
++++ b/vnfs/libexec/wwmkchroot/debian-9.tmpl
 @@ -0,0 +1,16 @@
 +#DESC: A base 64 bit Debian stretch chroot
 +
