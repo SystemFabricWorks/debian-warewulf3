@@ -1,6 +1,16 @@
 --- a/vnfs/libexec/wwmkchroot/include-deb
 +++ b/vnfs/libexec/wwmkchroot/include-deb
-@@ -57,8 +57,10 @@
+@@ -3,6 +3,9 @@
+ DEB_SRCS="root/sources.list"
+ DEB_ISOS="root/iso.list"
+ APT_CMD="apt-get -c $CHROOTDIR/$APT_CONF -o Dir::Etc::SourceList=/$CHROOTDIR/"
++# Set DEB_NO_INIT_APT_DIR to prevent prepopulation of /etc/apt
++DEB_NO_INIT_APT_DIR=
++
+ 
+ distro_check() {
+     if ! [ -x "/usr/bin/dpkg" ] ; then
+@@ -57,8 +60,10 @@
          ARCH="i386"
      fi
  
@@ -13,6 +23,37 @@
  
      DEB_SRCS_DIRNAME=`dirname $DEB_SRCS`
      mkdir -m 0755 -p $CHROOTDIR/$DEB_SRCS_DIRNAME
+@@ -97,21 +102,25 @@
+ }
+ 
+ postchroot() {
++    chroot $CHROOTDIR apt-get update -y
++    chroot $CHROOTDIR apt-get install -y $PKGLIST
++
+     # copy a more robust sources.list to our chroot
+-    cp $CHROOTDIR/$DEB_SRCS $CHROOTDIR/etc/apt/
++    #cp $CHROOTDIR/$DEB_SRCS $CHROOTDIR/etc/apt/
++
+ 
+     # debootstrap created our base chroot and now
+     # we install all the required packages into it
+-    APT_CMD="${APT_CMD}${SOURCESPATH}"
+-    $APT_CMD update
+-    $APT_CMD install $PKGLIST
++    #APT_CMD="${APT_CMD}${SOURCESPATH}"
++    #$APT_CMD update
++    #$APT_CMD install $PKGLIST
+ 
+     touch $CHROOTDIR/fastboot
+     return 0
+ }
+ 
+ finalize() {
+-    $APT_CMD clean
++    chroot $CHROOTDIR apt-get clean
+     return 0
+ }
+ 
 --- a/vnfs/libexec/wwmkchroot/Makefile.am
 +++ b/vnfs/libexec/wwmkchroot/Makefile.am
 @@ -1,6 +1,6 @@
