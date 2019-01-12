@@ -35,7 +35,6 @@ Architecture: all
 Depends: libdbd-mysql-perl,
          libdbd-pg-perl,
          libdbd-sqlite3-perl,
-         mariadb,
          ${misc:Depends},
          ${perl:Depends},
 Description: A suite of tools for clustering
