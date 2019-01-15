@@ -1,0 +1,75 @@
+--- a/provision/etc/dhcpd-template.conf
++++ b/provision/etc/dhcpd-template.conf
+@@ -15,17 +15,17 @@
+     filename "http://%{IPADDR}/WW/ipxe/cfg/${mac}";
+ } else {
+     if option architecture-type = 00:0B {
+-        filename "/warewulf/ipxe/bin-arm64-efi/snp.efi";
++        filename "/warewulf/ipxe/ipxe.efi";
+     } elsif option architecture-type = 00:0A {
+-        filename "/warewulf/ipxe/bin-arm32-efi/placeholder.efi";
++        filename "/warewulf/ipxe/ipxe.efi";
+     } elsif option architecture-type = 00:09 {
+-        filename "/warewulf/ipxe/bin-x86_64-efi/snp.efi";
++        filename "/warewulf/ipxe/ipxe.efi";
+     } elsif option architecture-type = 00:07 {
+-        filename "/warewulf/ipxe/bin-x86_64-efi/snp.efi";
++        filename "/warewulf/ipxe/ipxe.efi";
+     } elsif option architecture-type = 00:06 {
+-        filename "/warewulf/ipxe/bin-i386-efi/snp.efi";
++        filename "/warewulf/ipxe/ipxe.efi";
+     } elsif option architecture-type = 00:00 {
+-        filename "/warewulf/ipxe/bin-i386-pcbios/undionly.kpxe";
++        filename "/warewulf/ipxe/undionly.kpxe";
+     }
+ }
+ 
+--- a/provision/lib/Warewulf/Provision/Pxe.pm
++++ b/provision/lib/Warewulf/Provision/Pxe.pm
+@@ -84,32 +84,36 @@
+     my $self = shift;
+     my $datadir = &Warewulf::ACVars::get("datadir");
+     my $tftpdir = Warewulf::Provision::Tftp->new()->tftpdir();
+-    my @x86_tftpfiles = ("bin-i386-pcbios/undionly.kpxe", "bin-x86_64-efi/snp.efi", "bin-i386-efi/snp.efi");
+-    my @aarch64_tftpfiles = ("bin-arm64-efi/snp.efi");
++    my @x86_tftpfiles = ("/usr/lib/ipxe/undionly.kpxe", "/usr/lib/ipxe/undionly.kkpxe");
++    my @aarch64_tftpfiles = ("/boot/ipxe.efi", "/boot/ipxe.lkrn");
+     my (undef, undef, undef, undef, $arch) = POSIX::uname();
+ 
+     if ($tftpdir) {
+         foreach my $f (@x86_tftpfiles) {
++			my $sf = $f;
++			$f = basename($f);
+             if (! -f "$tftpdir/warewulf/ipxe/$f") {
+-                if (-f "$datadir/warewulf/ipxe/$f") {
+-                    &iprint("Copying $f to the tftp root\n");
++                if (-f "$sf") {
++                    &iprint("Copying $sf to the tftp root\n");
+                     my $dirname = dirname("$tftpdir/warewulf/ipxe/$f");
+                     mkpath($dirname);
+-                    system("cp $datadir/warewulf/ipxe/$f $tftpdir/warewulf/ipxe/$f");
++                    system("cp $sf $tftpdir/warewulf/ipxe/$f");
+                 } elsif ($arch eq "x86_64") {
+-                    &eprint("Could not locate Warewulf's internal $datadir/warewulf/ipxe/$f! Things might be broken!\n");
++                    &eprint("Could not locate ipxe $sf! Things might be broken!\n");
+                 }
+             }
+         }
+         foreach my $f (@aarch64_tftpfiles) {
++			my $sf = $f;
++			$f = basename($f);
+             if (! -f "$tftpdir/warewulf/ipxe/$f") {
+-                if (-f "$datadir/warewulf/ipxe/$f") {
+-                    &iprint("Copying $f to the tftp root\n");
++                if (-f "$sf") {
++                    &iprint("Copying $sf to the tftp root\n");
+                     my $dirname = dirname("$tftpdir/warewulf/ipxe/$f");
+                     mkpath($dirname);
+-                    system("cp $datadir/warewulf/ipxe/$f $tftpdir/warewulf/ipxe/$f");
++                    system("cp $sf $tftpdir/warewulf/ipxe/$f");
+                 } elsif ($arch eq "aarch64") {
+-                    &eprint("Could not locate Warewulf's internal $datadir/warewulf/ipxe/$f! Things might be broken!\n");
++                    &eprint("Could not locate ipxe $sf! Things might be broken!\n");
+                 }
+             }
+         }

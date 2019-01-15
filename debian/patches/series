@@ -5,3 +5,4 @@ fix-00-format-syntax.patch
 fix-profile.d-paths.patch
 fix-wwfirstboot.patch
 fix-wwmkchroot-templates.patch
+fix-ipxe.patch
