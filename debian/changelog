@@ -1,5 +1,5 @@
 warewulf3 (3.8.1-1) UNRELEASED; urgency=medium
 
-  * Initial release.
+  * Initial release (Closes: #919508)
 
- -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 09 Jan 2019 16:32:17 -0600
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 16 Jan 2019 13:09:21 -0600
