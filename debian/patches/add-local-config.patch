@@ -1,0 +1,175 @@
+--- a/ipmi/configure.ac
++++ b/ipmi/configure.ac
+@@ -58,6 +58,10 @@
+ AC_MSG_RESULT($WAREWULF_LIBEXECDIR)
+ AC_SUBST(WAREWULF_LIBEXECDIR)
+ 
++AC_ARG_WITH([local],
++    AS_HELP_STRING([--with-local], [Use local packages, don't build 3rd_party tools]))
++AM_CONDITIONAL([LOCAL], [test "x$with_local" = "xyes"])
++
+ dnl# Get git version
+ GITVERSION=`cat .gitversion | tr -d '\n'`
+ AC_SUBST(GITVERSION)
+--- a/ipmi/Makefile.am
++++ b/ipmi/Makefile.am
+@@ -1,5 +1,7 @@
+-SUBDIRS = lib 3rd_party initramfs
+-
++SUBDIRS = lib initramfs
++if !LOCAL
++SUBDIRS += 3rd_party
++endif
+ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure compile config.* ltmain.sh install-sh missing
+ DISTCLEANFILES = 
+ CLEANFILES = 
+--- a/ipmi/initramfs/Makefile.am
++++ b/ipmi/initramfs/Makefile.am
+@@ -1,5 +1,8 @@
++if !LOCAL
+ all: ipmitool
+-
++else
++all:
++endif
+ top_srcdir = @top_srcdir@
+ 
+ MACHINE:=$(shell uname -m)
+@@ -30,7 +33,24 @@
+ 	fi
+ 
+ 
+-rootfs: ipmitool
++rootfs-3rd-party: ipmitool
++	cp -a ipmitool rootfs/sbin/
++	find rootfs -type f -perm -o+x  -print | xargs ldd | grep "=>" | awk '{print $$3}' | grep "^/" | sort | uniq | while read i; do cp -L --parents $$i rootfs/; done
++	find rootfs -type f -perm -o+x -print | xargs strip -g
++
++install-data-local-3rd-party:
++	install -d -m 755 $(DESTDIR)/$(WAREWULF_LIBEXECDIR)/warewulf
++	install -m 755 ipmitool $(DESTDIR)/$(WAREWULF_LIBEXECDIR)/warewulf
++
++if LOCAL
++rootfs: rootfs-base
++install-data-local: install-data-local-base
++else
++rootfs: rootfs-base rootfs-3rd-party
++install-data-local: install-data-local-base install-data-local-3rd-party
++endif
++
++rootfs-base::
+ 	rm -rf rootfs
+ 	mkdir rootfs
+ 	mkdir rootfs/sbin
+@@ -38,21 +58,16 @@
+ 	mkdir rootfs/lib64
+ 	mkdir -p rootfs/warewulf/provision/
+ 	chmod -R u+w rootfs/
+-	cp -a ipmitool rootfs/sbin/
+-	find rootfs -type f -perm -o+x  -print | xargs ldd | grep "=>" | awk '{print $$3}' | grep "^/" | sort | uniq | while read i; do cp -L --parents $$i rootfs/; done
+ 	chmod -R +w rootfs/
+-	find rootfs -type f -perm -o+x -print | xargs strip -g
+ 	install -m 755 $(srcdir)/10-ipmiconfig rootfs/warewulf/provision/10-ipmiconfig
+ 
+ capability.cpio: rootfs
+ 	cd rootfs/; find . | cpio -o -H newc -F ../capability.cpio
+ 
+-install-data-local: capability.cpio
++install-data-local-base: capability.cpio
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/capabilities
+ 	install -m 644 capability.cpio $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/capabilities/setup-ipmi
+-	install -d -m 755 $(DESTDIR)/$(WAREWULF_LIBEXECDIR)/warewulf
+-	install -m 755 ipmitool $(DESTDIR)/$(WAREWULF_LIBEXECDIR)/warewulf
+ 
+ uninstall-local:
+ 	rm -rf $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/capabilities/setup-ipmi
+--- a/provision/Makefile.am
++++ b/provision/Makefile.am
+@@ -1,4 +1,7 @@
+-SUBDIRS = lib initramfs etc bin cgi-bin share 3rd_party
++SUBDIRS = lib initramfs etc bin cgi-bin share
++if !LOCAL
++SUBDIRS += 3rd_party
++endif
+ 
+ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure compile config.* install-sh missing
+ DISTCLEANFILES = 
+--- a/provision/configure.ac
++++ b/provision/configure.ac
+@@ -109,6 +109,10 @@
+ AM_CONDITIONAL(BUILD_X86_64, [test "x$build_x86_64" = "xyes"])
+ AM_CONDITIONAL(BUILD_ARM64, [test "x$build_arm64" = "xyes"])
+ 
++AC_ARG_WITH([local],
++    AS_HELP_STRING([--with-local], [Use local packages, don't build 3rd_party tools]))
++AM_CONDITIONAL([LOCAL], [test "x$with_local" = "xyes"])
++
+ AC_OUTPUT(
+    Makefile
+    warewulf-provision.spec
+--- a/provision/initramfs/Makefile.am
++++ b/provision/initramfs/Makefile.am
+@@ -90,7 +90,28 @@
+ 		$(MAKE) -C _work/$(PARTED_DIR);\
+ 	fi
+ 
+-rootfs: busybox e2fsprogs libarchive parted
++if LOCAL
++rootfs: rootfs-base
++install-data-local: install-data-local-base
++else
++rootfs: rootfs-base rootfs-3rd-party
++install-data-local: install-data-local-base install-data-local-3rd-party
++endif
++
++rootfs-3rd-party: busybox e2fsprogs libarchive parted
++	cp -a _work/$(BUSYBOX_DIR)/_install/* rootfs/
++	cp _work/$(E2FSPROGS_DIR)/misc/mke2fs rootfs/sbin/mkfs.ext4
++	ln -s mkfs.ext4 rootfs/sbin/mkfs.ext3
++	cp -a _work/$(LIBARCHIVE_DIR)/bsdtar rootfs/bin/bsdtar
++	$(MAKE) -C _work/$(PARTED_DIR)/ DESTDIR=`pwd`/rootfs install
++	cp -L --parents /lib*/ld-linux* rootfs/
++	find rootfs -type f -perm -o+x -print | grep -v ld-linux | xargs ldd | grep "=>" | awk '{print $$3}' | grep "^/" | sort | uniq | while read i; do cp -L --parents $$i rootfs/ && chmod 755 rootfs/$$i; done
++	rm -f rootfs/linuxrc rootfs/lib64/*.la rootfs/lib/*.la rootfs/usr/lib64/*.la rootfs/usr/lib/*.la
++	rm -rf rootfs/usr/share rootfs/usr/include rootfs/usr/lib/pkgconfig
++	find -type d \! -perm -u=w -exec chmod u+w {} \;
++	find rootfs -type f -perm -o+x -print | xargs strip -g
++
++rootfs-base:
+ 	rm -rf rootfs
+ 	mkdir rootfs
+ 	mkdir rootfs/bin
+@@ -103,17 +124,6 @@
+ 	mkdir rootfs/lib
+ 	mkdir rootfs/lib64
+ 	chmod -R u+w rootfs/
+-	cp -a _work/$(BUSYBOX_DIR)/_install/* rootfs/
+-	cp _work/$(E2FSPROGS_DIR)/misc/mke2fs rootfs/sbin/mkfs.ext4
+-	ln -s mkfs.ext4 rootfs/sbin/mkfs.ext3
+-	cp -a _work/$(LIBARCHIVE_DIR)/bsdtar rootfs/bin/bsdtar
+-	$(MAKE) -C _work/$(PARTED_DIR)/ DESTDIR=`pwd`/rootfs install
+-	cp -L --parents /lib*/ld-linux* rootfs/
+-	find rootfs -type f -perm -o+x -print | grep -v ld-linux | xargs ldd | grep "=>" | awk '{print $$3}' | grep "^/" | sort | uniq | while read i; do cp -L --parents $$i rootfs/ && chmod 755 rootfs/$$i; done
+-	rm -f rootfs/linuxrc rootfs/lib64/*.la rootfs/lib/*.la rootfs/usr/lib64/*.la rootfs/usr/lib/*.la
+-	rm -rf rootfs/usr/share rootfs/usr/include rootfs/usr/lib/pkgconfig
+-	find -type d \! -perm -u=w -exec chmod u+w {} \;
+-	find rootfs -type f -perm -o+x -print | xargs strip -g
+ 
+ 	install -m 755 $(srcdir)/init rootfs/init
+ 	install -m 755 $(srcdir)/functions rootfs/etc/functions
+@@ -131,10 +141,12 @@
+ 	install -m 644 $(srcdir)/devs.cpio initramfs.cpio
+ 	cd rootfs/; find . | cpio -o -H newc -A -F ../initramfs.cpio
+ 
+-install-data-local: initramfs.cpio
++install-data-local-3rd-party:
++	install -m 644 initramfs.cpio $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/base
++
++install-data-local-base: initramfs.cpio
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)
+-	install -m 644 initramfs.cpio $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/base
+ 
+ uninstall-local:
+ 	rm -rf $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/base

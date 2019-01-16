@@ -17,9 +17,9 @@ common:
 
 .PHONY: override_dh_autoreconf
 override_dh_autoreconf: common
-	cd ipmi && ./autogen.sh $(CONFIG_PATHS)
+	cd ipmi && ./autogen.sh $(CONFIG_PATHS) --with-local
 	cd vnfs && ./autogen.sh $(CONFIG_PATHS)
-	cd provision && ./autogen.sh $(CONFIG_PATHS)
+	cd provision && ./autogen.sh $(CONFIG_PATHS) --with-local
 	cd cluster && ./autogen.sh $(CONFIG_PATHS)
 
 .PHONY: override_dh_auto_build
