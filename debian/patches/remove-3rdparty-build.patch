@@ -2,27 +2,118 @@
 +++ b/ipmi/Makefile.am
 @@ -1,4 +1,4 @@
 -SUBDIRS = lib 3rd_party initramfs
-+SUBDIRS = lib
++SUBDIRS = lib initramfs
  
  MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure compile config.* ltmain.sh install-sh missing
  DISTCLEANFILES = 
+--- a/ipmi/initramfs/Makefile.am
++++ b/ipmi/initramfs/Makefile.am
+@@ -1,4 +1,4 @@
+-all: ipmitool
++all:
+ 
+ top_srcdir = @top_srcdir@
+ 
+@@ -30,7 +30,7 @@
+ 	fi
+ 
+ 
+-rootfs: ipmitool
++rootfs:
+ 	rm -rf rootfs
+ 	mkdir rootfs
+ 	mkdir rootfs/sbin
+@@ -38,10 +38,7 @@
+ 	mkdir rootfs/lib64
+ 	mkdir -p rootfs/warewulf/provision/
+ 	chmod -R u+w rootfs/
+-	cp -a ipmitool rootfs/sbin/
+-	find rootfs -type f -perm -o+x  -print | xargs ldd | grep "=>" | awk '{print $$3}' | grep "^/" | sort | uniq | while read i; do cp -L --parents $$i rootfs/; done
+ 	chmod -R +w rootfs/
+-	find rootfs -type f -perm -o+x -print | xargs strip -g
+ 	install -m 755 $(srcdir)/10-ipmiconfig rootfs/warewulf/provision/10-ipmiconfig
+ 
+ capability.cpio: rootfs
+@@ -51,12 +48,10 @@
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/capabilities
+ 	install -m 644 capability.cpio $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/capabilities/setup-ipmi
+-	install -d -m 755 $(DESTDIR)/$(WAREWULF_LIBEXECDIR)/warewulf
+-	install -m 755 ipmitool $(DESTDIR)/$(WAREWULF_LIBEXECDIR)/warewulf
++
+ 
+ uninstall-local:
+ 	rm -rf $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/capabilities/setup-ipmi
+-	rm -rf $(DESTDIR)/$(WAREWULF_LIBEXECDIR)/warewulf/ipmitool
+ 
+ clean-local:
+ 	rm -rf _work rootfs ipmitool capability.cpio
+--- a/provision/initramfs/Makefile.am
++++ b/provision/initramfs/Makefile.am
+@@ -1,6 +1,6 @@
+ SUBDIRS = capabilities
+ 
+-all: initramfs.cpio
++all: rootfs
+ 
+ top_srcdir = @top_srcdir@
+ 
+@@ -90,7 +90,7 @@
+ 		$(MAKE) -C _work/$(PARTED_DIR);\
+ 	fi
+ 
+-rootfs: busybox e2fsprogs libarchive parted
++rootfs:
+ 	rm -rf rootfs
+ 	mkdir rootfs
+ 	mkdir rootfs/bin
+@@ -103,17 +103,9 @@
+ 	mkdir rootfs/lib
+ 	mkdir rootfs/lib64
+ 	chmod -R u+w rootfs/
+-	cp -a _work/$(BUSYBOX_DIR)/_install/* rootfs/
+-	cp _work/$(E2FSPROGS_DIR)/misc/mke2fs rootfs/sbin/mkfs.ext4
+-	ln -s mkfs.ext4 rootfs/sbin/mkfs.ext3
+-	cp -a _work/$(LIBARCHIVE_DIR)/bsdtar rootfs/bin/bsdtar
+-	$(MAKE) -C _work/$(PARTED_DIR)/ DESTDIR=`pwd`/rootfs install
+-	cp -L --parents /lib*/ld-linux* rootfs/
+-	find rootfs -type f -perm -o+x -print | grep -v ld-linux | xargs ldd | grep "=>" | awk '{print $$3}' | grep "^/" | sort | uniq | while read i; do cp -L --parents $$i rootfs/ && chmod 755 rootfs/$$i; done
+ 	rm -f rootfs/linuxrc rootfs/lib64/*.la rootfs/lib/*.la rootfs/usr/lib64/*.la rootfs/usr/lib/*.la
+ 	rm -rf rootfs/usr/share rootfs/usr/include rootfs/usr/lib/pkgconfig
+ 	find -type d \! -perm -u=w -exec chmod u+w {} \;
+-	find rootfs -type f -perm -o+x -print | xargs strip -g
+ 
+ 	install -m 755 $(srcdir)/init rootfs/init
+ 	install -m 755 $(srcdir)/functions rootfs/etc/functions
+@@ -131,10 +123,9 @@
+ 	install -m 644 $(srcdir)/devs.cpio initramfs.cpio
+ 	cd rootfs/; find . | cpio -o -H newc -A -F ../initramfs.cpio
+ 
+-install-data-local: initramfs.cpio
++install-data-local: rootfs
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/
+ 	install -d -m 755 $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)
+-	install -m 644 initramfs.cpio $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/base
+ 
+ uninstall-local:
+ 	rm -rf $(DESTDIR)/$(WAREWULF_STATEDIR)/warewulf/initramfs/$(MACHINE)/base
 --- a/provision/Makefile.am
 +++ b/provision/Makefile.am
 @@ -1,4 +1,4 @@
 -SUBDIRS = lib initramfs etc bin cgi-bin share 3rd_party
-+SUBDIRS = lib etc bin cgi-bin share
++SUBDIRS = lib initramfs etc bin cgi-bin share
  
  MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure compile config.* install-sh missing
  DISTCLEANFILES = 
 --- a/ipmi/configure.ac
 +++ b/ipmi/configure.ac
-@@ -68,8 +68,5 @@
+@@ -68,8 +68,6 @@
     lib/Warewulf/Makefile
     lib/Warewulf/Module/Makefile
     lib/Warewulf/Module/Cli/Makefile
 -   3rd_party/Makefile
 -   3rd_party/BSD/Makefile
--   initramfs/Makefile
+    initramfs/Makefile
  )
  
 --- a/provision/configure.ac
@@ -37,18 +128,3 @@
     bin/Makefile
     cgi-bin/Makefile
     etc/Makefile
-@@ -122,14 +119,6 @@
-    etc/filesystem/Makefile
-    etc/filesystem/examples/Makefile
-    etc/warewulf-httpd.conf
--   initramfs/Makefile
--   initramfs/capabilities/Makefile
--   initramfs/capabilities/provision-adhoc/Makefile
--   initramfs/capabilities/provision-files/Makefile
--   initramfs/capabilities/provision-vnfs/Makefile
--   initramfs/capabilities/provision-selinux/Makefile
--   initramfs/capabilities/setup-filesystems/Makefile
--   initramfs/capabilities/transport-http/Makefile
-    share/Makefile
-    lib/Makefile
-    lib/Warewulf/Makefile

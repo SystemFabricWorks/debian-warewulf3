@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+# Copyright (c) 2019 System Fabric Works, Inc. <info@systemfabricworks.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+#
+# Builds initramfs image for warewulf on Debian, using mkinitramfs.
+#
+
+set -e
+
+RUN_DIR=$(pwd)
+WW_INITRAMFS_DIR=$(wwconfig STATEDIR)/warewulf/initramfs/x86_64
+WW_HOOKS_DIR=/usr/lib/warewulf/wwmkinitramfs/
+
+EXTRACT_DIR=
+INSTALL=0
+KEEP_WORK=0
+VERBOSE_FLAG=
+
+usage() {
+		echo "$0 [-h] [-x DIR] [-H DIR] [-i] [-v]"
+		echo "\t-h : this message"
+		echo "\t-H : directory that contais WW hooks"
+		echo "\t-x : extract image into specified directory"
+		echo "\t-i : install image into $WW_INITRAMFS_DIR"
+		echo "\t-k : keep working directory"
+		echo "\t-c : verbose output"
+}
+
+while [ $# -gt 0 ] ; do
+	  ARG=$1
+	  case "$ARG" in
+	  -x)  shift
+	  	   EXTRACT_DIR="$1"
+		   ;;
+	  -v)  VERBOSE_FLAG="-v"
+		   ;;
+	  -i)  INSTALL=1
+		   ;;
+	  -H)  shift
+		   WW_HOOKS_DIR="$1"
+		   ;;
+	  -k)  KEEP_WORK=1
+		   ;;
+	  -h)  usage
+	  	   exit 0
+		   ;;
+	  *)   echo "$0: unrecognized argument: $ARG"
+	  	   exit 1
+		   ;;
+	  esac
+	  shift	  
+done
+
+if [ ! -z "$EXTRACT_DIR" -a ! -d "$EXTRACT_DIR" ] ; then
+   echo "Directory $EXTRACT_DIR does not exist"
+   exit 1
+fi
+
+WORK_DIR=$(mktemp -d /tmp/wwmkinitramfs.XXXXX)
+CONF_DIR=$WORK_DIR/conf
+INITRAMFS_DIR=$WORK_DIR/initramfs
+echo "Building in $WORK_DIR"
+mkdir -p $CONF_DIR $INITRAMFS_DIR
+
+cat << EOM > $CONF_DIR/initramfs.conf
+MODULES=most
+BUSYBOX=auto
+KEYMAP=n
+COMPRESS=gzip
+DEVICE=
+NFSROOT=auto
+RESUME=none
+EOM
+
+> $CONF_DIR/modules
+ln -s /etc/initramfs-tools/scripts $CONF_DIR
+mkdir $CONF_DIR/hooks
+cp "$WW_HOOKS_DIR/ww-hook" $CONF_DIR/hooks
+
+INITRD=$INITRAMFS_DIR/initrd.img-$(uname -r)
+/usr/sbin/mkinitramfs $VERBOSE_FLAG -d $CONF_DIR -o $INITRD
+
+if [ ! -z "$EXTRACT_DIR" ] ; then
+   echo "Extracting to $EXTRACT_DIR"
+   cd "$EXTRACT_DIR"
+   zcat $INITRD | cpio -id
+   cd "$RUN_DIR"
+fi
+
+if [ $INSTALL -eq 1 ] ; then
+   if [ -f $WW_INITRAMFS_DIR/base ] ; then
+   	  echo "Backing up $WW_INITRAMFS_DIR/base to $WW_INITRAMFS_DIR/base.old"
+	  cp -a $WW_INITRAMFS_DIR/base $WW_INITRAMFS_DIR/base.old
+   fi
+   zcat $INITRD > $WW_INITRAMFS_DIR/base
+fi
+
+if [ $KEEP_WORK -ne 1 ] ; then
+   rm -rf $WORK_DIR
+fi

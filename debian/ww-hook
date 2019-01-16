@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# Copyright (c) 2019 System Fabric Works, Inc. <info@systemfabricworks.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+#
+# Hook for mkinitramfs that copies in binaries required by warewulf
+# provisioning.
+#
+
+set -e
+#set -x
+
+#echo "Warewulf hook"
+
+if [ -z "$DESTDIR" ] ; then
+	echo ERROR: DESTDIR not defined.
+	exit 1
+fi
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /sbin/e2fsck
+copy_exec /sbin/fsck.ext2
+copy_exec /sbin/fsck.ext3
+copy_exec /sbin/fsck.ext4
+copy_exec /sbin/mke2fs
+copy_exec /sbin/mkfs.ext2
+copy_exec /sbin/mkfs.ext3
+copy_exec /sbin/mkfs.ext4
+copy_exec /usr/bin/bsdtar /bin
+copy_exec /sbin/parted
+copy_exec /sbin/partprobe
+copy_exec /usr/lib/x86_64-linux-gnu/libarchive.so.13 /lib/x86_64-linux-gnu
+
+for FILE in $DESTDIR/bin/*; do
+	if [ -f $FILE -a -x $FILE ] ; then
+		copy_exec $FILE /usr/bin/`basename $FILE`
+	fi
+done
+
+copy_exec /var/lib/warewulf/initramfs/x86_64/rootfs/etc/functions /etc
+rm $DESTDIR/init
+copy_exec /var/lib/warewulf/initramfs/x86_64/rootfs/init /
+for FILE in /var/lib/warewulf/initramfs/x86_64/rootfs/sbin/* ; do
+	copy_exec $FILE /sbin
+done
+

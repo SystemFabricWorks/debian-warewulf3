@@ -61,6 +61,7 @@ Package: warewulf3-provision
 Architecture: all
 Depends: busybox,
          e2fsprogs (>=1.42),
+         initramfs-tools-core,
          ipxe,
          libarchive13,
          parted,

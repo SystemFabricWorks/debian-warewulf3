@@ -37,6 +37,8 @@ override_dh_auto_install:
 	$(MAKE) -C vnfs DESTDIR=$(DESTDIR) install
 	cd $(DESTDIR)/usr/lib/warewulf/wwmkchroot && chmod 0664 *.tmpl include-*
 	$(MAKE) -C provision DESTDIR=$(DESTDIR) install
+	cp -r provision/initramfs/rootfs $(DESTDIR)/var/lib/warewulf/initramfs/x86_64/rootfs
 	cd $(DESTDIR)/etc/apache2/conf.d && mv warewulf-httpd.conf warewulf3-provision-server.conf
 	$(MAKE) -C cluster DESTDIR=$(DESTDIR) install
-
+	install -m 0755 debian/wwmkinitramfs $(DESTDIR)/usr/bin
+	install -D -m 0755 debian/ww-hook $(DESTDIR)/usr/lib/warewulf/wwmkinitramfs/ww-hook

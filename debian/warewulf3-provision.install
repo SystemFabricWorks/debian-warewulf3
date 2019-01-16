@@ -2,7 +2,9 @@ etc/warewulf/defaults/provision.conf
 etc/warewulf/livesync.conf
 etc/warewulf/provision.conf
 usr/bin/wwlivesync
+usr/bin/wwmkinitramfs
 usr/bin/wwnodescan
+usr/lib/warewulf/wwmkinitramfs
 usr/share/man/man1/wwlivesync.1
 usr/share/man/man1/wwnodescan.1
 usr/share/perl5/Warewulf/Bootstrap.pm
@@ -23,3 +25,4 @@ usr/share/perl5/Warewulf/Provision/HostsFile.pm
 usr/share/perl5/Warewulf/Provision/Pxe.pm
 usr/share/perl5/Warewulf/Provision/Tftp.pm
 usr/share/perl5/Warewulf/Vnfs.pm
+var/lib/warewulf/initramfs
