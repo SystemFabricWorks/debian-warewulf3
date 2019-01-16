@@ -1,0 +1,222 @@
+#!/bin/sh
+#
+# Copyright (c) 2001-2003 Gregory M. Kurtzer
+#
+# Copyright (c) 2003-2017, The Regents of the University of California,
+# through Lawrence Berkeley National Laboratory (subject to receipt of any
+# required approvals from the U.S. Dept. of Energy).  All rights reserved.
+#
+# Copyright (c) 2017 Benjamin S. Allen
+
+## Example input:
+# WWFS="select /dev/sda,mklabel gpt,mkpart primary ext4 0% 20%,mkpart primary linux-swap 20% 50%,mkpart primary ext4 50% 100%,name 1 boot,name 2 swap,name 3 root,mkfs 1 ext4 '-L boot',mkfs 2 '-L swap' swap,mkfs 3 ext4 '-L root',fstab 3 / ext4 defaults 0 0,fstab 1 /boot ext4 defaults 0 0,fstab 2 swap swap defaults 0 0"
+
+# Exit on any non-zero exit code
+set -o errexit
+
+# Pipeline's return status is the value of the last (rightmost) command
+# to exit with a non-zero status, or zero if all commands exit successfully.
+set -o pipefail
+
+[ -f /etc/functions ] && . /etc/functions
+
+# By default mount a tmpfs volumne for root
+WWFS=${WWFS:="select tmpfs,fstab "" / tmpfs rw:relatime:mode=555 0 0"}
+
+run_parted() {
+  local SELECT_DISK="${1}"
+  local PARTED_CMDS="${2}"
+  case $SELECT_DISK in
+    /*)
+      if [ -n "${PARTED_CMDS}" ]; then
+        msg_gray "   * running parted on ${SELECT_DISK}"
+        {
+          /usr/sbin/parted --align=optimal --script "${SELECT_DISK}" "${PARTED_CMDS}" && wwsuccess 
+        } || { 
+          wwfailure
+          exit 2
+        }
+      fi
+      ;;
+    *)
+      return
+      ;;
+  esac
+    
+}
+
+run_mkfs() {
+  local SELECT_DISK="${1}"
+  local PARTITION="${2}"
+  local TYPE="${3}"
+  shift 3
+  local OPTS="${*:-}"
+
+  local DEV="${SELECT_DISK}${PARTITION}"
+
+  if [ -x /usr/bin/udevadm ]; then
+    /usr/bin/udevadm settle --timeout=15 --exit-if-exists="${DEV}"
+  fi
+
+  msg_gray "   * formatting ${DEV}"
+
+  case $TYPE in
+    swap)
+      {
+        /sbin/mkswap ${OPTS} "${DEV}" >/dev/null 2>&1 && wwsuccess 
+      } || {
+        wwfailure
+        exit 2
+      }
+    ;;
+    ext2)
+      {
+        /sbin/mkfs.ext2 -q -F ${OPTS} "${DEV}" >/dev/null 2>&1 && wwsuccess
+      } || {
+        wwfailure
+        exit 2
+      }
+    ;;
+    ext3)
+      {
+        /sbin/mkfs.ext3 -q -F ${OPTS} "${DEV}" >/dev/null 2>&1 && wwsuccess
+      } || { 
+        wwfailure
+        exit 2
+      }
+    ;;
+    ext4)
+      {
+        /sbin/mkfs.ext4 -q -F ${OPTS} "${DEV}" >/dev/null 2>&1 && wwsuccess
+      } || {
+        wwfailure
+        exit 2
+      }
+    ;;
+    vfat)
+      {
+        /sbin/mkfs.vfat ${OPTS} "${DEV}" >/dev/null 2>&1 && wwsuccess
+      } || { 
+        wwfailure
+        exit 2
+      }
+    ;;
+    *)
+      wwlogger "Unsupported filesystem type in mkfs command: ${TYPE}"
+      wwskipped
+    ;;
+  esac
+}
+
+update_fstab_and_mount() {
+  local SELECT_DISK="${1}"
+  local ENTRY="${2}"
+  local NEWROOT="${3}"
+
+  if [ "${ENTRY:0:5}" != "UUID=" ] && [ "${ENTRY:0:6}" != "LABEL=" ]; then
+    ENTRY="${SELECT_DISK}${ENTRY}"
+  fi
+
+  # Add entry to fstab that will be moved into the NEWROOT chroot, transform options field ":" delim to commas
+  echo "${ENTRY}" | /usr/bin/awk '{ gsub(/:/,",",$4); print }' >> "${TEMPDIR}/fstab"
+
+  MOUNTPOINT=$(echo "${ENTRY}" | /usr/bin/awk '{ print $2 }')
+  msg_gray "   * mounting ${MOUNTPOINT}"
+  if [ "${MOUNTPOINT:0:1}" = "/" ]; then
+    # Prepend NEWROOT to mount points, transform options field ":" delim to fstab format with commas
+    echo "${ENTRY}" | /usr/bin/awk -v NEWROOT="${NEWROOT}" '{ $2 = NEWROOT $2; gsub(/:/,",",$4); print }' >> /etc/fstab
+    {
+      mkdir -p "${NEWROOT}${MOUNTPOINT}" && \
+      mount "${NEWROOT}${MOUNTPOINT}" && wwsuccess
+    } || {
+      wwfailure
+      exit 2
+    }
+  else 
+    wwskipped
+  fi
+}
+
+{
+  SELECT_DISK=""
+  PARTED_CMDS=""
+  FIRST_DISK=1
+  NEWROOT=${NEWROOT:=/newroot}
+  TEMPDIR=${TEMPDIR:=/tmp}
+
+  IFS=","
+
+  # Status for parent filesystem message
+  wwrunning
+
+  if [ ! -e /etc/mtab ]; then
+    ln -s /proc/mounts /etc/mtab
+  fi
+
+  for FSCMD in ${WWFS}; do
+    case ${FSCMD} in
+
+    # Don't pass select commands directly to parted as parted --script 
+    # needs a device specified on the CLI
+    select*)
+      if [ "${FIRST_DISK}" ]; then
+        FIRST_DISK=0
+      else
+        # Run any accumulated parted commands before changing selected disk
+        run_parted "${SELECT_DISK}" "${PARTED_CMDS}"
+        PARTED_CMDS=""
+        SELECT_DISK=""
+      fi
+      SELECT_DISK=$(echo "${FSCMD}" | cut -f 2 -d' ')
+    ;;
+
+    fstab*)
+      if [ -z "${SELECT_DISK}" ]; then
+        wwlogger "No select disk set before fstab command: ${FSCMD:6}"
+        exit 2
+      fi
+      # Run any accumulated parted commands before continuing with fstab
+      run_parted "${SELECT_DISK}" "${PARTED_CMDS}"
+      PARTED_CMDS=""
+      update_fstab_and_mount "${SELECT_DISK}" "${FSCMD:6}" "${NEWROOT}"
+    ;;
+
+    mkfs*)
+      if  [ -z "${SELECT_DISK}" ]; then
+        wwlogger "No select disk set before mkfs command: ${FSCMD:5}"
+        exit 2
+      fi
+
+      # Run any accumulated parted commands before continuing with mkfs
+      run_parted "${SELECT_DISK}" "${PARTED_CMDS}"
+      PARTED_CMDS=""
+
+      # Need FSCMD to be split into individual arguments for run_mkfs
+      unset IFS
+      run_mkfs "${SELECT_DISK}" ${FSCMD:5}
+      IFS=","
+    ;;
+
+    # All parted command except select
+    align-check*|help*|mklabel*|mktable*|mkpart*|name*|print*|quit|rescue*|rm*|disk_set*|disk_toggle*|set*|toggle*|unit*|version)
+      if [ -z "${SELECT_DISK}" ]; then
+        wwlogger "No selected disk set before command: ${FSCMD}"
+        exit 2
+      fi
+
+      if [ -z $PARTED_CMDS ]; then
+        PARTED_CMDS="${FSCMD}"
+      else
+        PARTED_CMDS="${PARTED_CMDS} ${FSCMD}"
+      fi
+    ;;
+
+    *)
+      wwlogger "Unknown parted command: ${FSCMD}"
+      exit 2
+    ;;
+    esac
+
+  done
+  msg_white " * filesystems"  
+}
