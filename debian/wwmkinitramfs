@@ -1,44 +1,82 @@
 #!/bin/sh
 #
-# Copyright (c) 2019 System Fabric Works, Inc. <info@systemfabricworks.com>
+# Warewulf Copyright (c) 2001-2003 Gregory M. Kurtzer
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License.
+# Warewulf Copyright (c) 2003-2013, The Regents of the University of
+# California, through Lawrence Berkeley National Laboratory (subject to
+# receipt of any required approvals from the U.S. Dept. of Energy).
+# All rights reserved.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# Warewulf Copyright (c) 2019 System Fabric Works, Inc. <info@systemfabricworks.com>
 #
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# (1) Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# (2) Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#
+# (3) Neither the name of the University of California, Lawrence Berkeley
+# National Laboratory, U.S. Dept. of Energy nor the names of its contributors
+# may be used to endorse or promote products derived from this software
+# without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# You are under no obligation whatsoever to provide any bug fixes, patches,
+# or upgrades to the features, functionality or performance of the source
+# code ("Enhancements") to anyone; however, if you choose to make your
+# Enhancements available either publicly, or directly to Lawrence Berkeley
+# National Laboratory, without imposing a separate written license agreement
+# for such Enhancements, then you hereby grant the following license: a
+# non-exclusive, royalty-free perpetual license to install, use, modify,
+# prepare derivative works, incorporate into other computer software,
+# distribute, and sublicense such enhancements or derivative works thereof,
+# in binary and source code form.
 #
 
 #
-# Builds initramfs image for warewulf on Debian, using mkinitramfs.
+# Build initramfs image for warewulf on Debian, using mkinitramfs.
 #
 
 set -e
 
 RUN_DIR=$(pwd)
-WW_INITRAMFS_DIR=$(wwconfig STATEDIR)/warewulf/initramfs/x86_64
-WW_HOOKS_DIR=/usr/lib/warewulf/wwmkinitramfs/
+MACHINE=$(uname -m)
+WW_INITRAMFS_DIR=$(wwconfig STATEDIR)/warewulf/initramfs/$MACHINE
+WW_HOOKS_DIR=$(wwconfig LIBEXECDIR)/warewulf/wwmkinitramfs/hooks
 
 EXTRACT_DIR=
 INSTALL=0
 KEEP_WORK=0
 VERBOSE_FLAG=
+INITRD="ww-initrd-$(uname -r)"
 
 usage() {
-		echo "$0 [-h] [-x DIR] [-H DIR] [-i] [-v]"
-		echo "\t-h : this message"
-		echo "\t-H : directory that contais WW hooks"
-		echo "\t-x : extract image into specified directory"
-		echo "\t-i : install image into $WW_INITRAMFS_DIR"
-		echo "\t-k : keep working directory"
-		echo "\t-c : verbose output"
+	cat <<EOF
+Usage: $0 [OPTION]
+Create initrd image for warewulf bootstrap.
+  -h         this message
+  -H DIR     specify directory that contains WW hooks
+  -i         install image into $WW_INITRAMFS_DIR
+  -k         keep working directory
+  -o FILE    specify output file (default $INITRD)
+  -v         verbose output
+  -x DIR     extract image into specified directory
+EOF
 }
 
 while [ $# -gt 0 ] ; do
@@ -46,6 +84,9 @@ while [ $# -gt 0 ] ; do
 	  case "$ARG" in
 	  -x)  shift
 	  	   EXTRACT_DIR="$1"
+		   ;;
+	  -o)  shift
+		   INITRD="$1"
 		   ;;
 	  -v)  VERBOSE_FLAG="-v"
 		   ;;
@@ -59,7 +100,7 @@ while [ $# -gt 0 ] ; do
 	  -h)  usage
 	  	   exit 0
 		   ;;
-	  *)   echo "$0: unrecognized argument: $ARG"
+	  *)   echo "ERROR: $0: unrecognized argument: $ARG"
 	  	   exit 1
 		   ;;
 	  esac
@@ -67,17 +108,29 @@ while [ $# -gt 0 ] ; do
 done
 
 if [ ! -z "$EXTRACT_DIR" -a ! -d "$EXTRACT_DIR" ] ; then
-   echo "Directory $EXTRACT_DIR does not exist"
+   echo "ERROR: extraction directory $EXTRACT_DIR does not exist"
    exit 1
 fi
 
-WORK_DIR=$(mktemp -d /tmp/wwmkinitramfs.XXXXX)
-CONF_DIR=$WORK_DIR/conf
-INITRAMFS_DIR=$WORK_DIR/initramfs
-echo "Building in $WORK_DIR"
-mkdir -p $CONF_DIR $INITRAMFS_DIR
+if [ -e "$INITRD" ] ; then
+	echo "ERROR: output file $INITRD already exists"
+	exit 1
+fi
 
-cat << EOM > $CONF_DIR/initramfs.conf
+if [ $INSTALL -eq 1 -a -e "$WW_INITRAMFS_DIR/base" ] ; then
+   	echo "ERROR: installation target $WW_INITRAMFS_DIR/base already exists"
+	exit 1
+fi
+
+WORK_DIR=$(mktemp -d /tmp/wwmkinitramfs.XXXXX)
+CONF_DIR="$WORK_DIR/conf"
+INITRAMFS_DIR="$WORK_DIR/initramfs"
+TMPINITRD="$WORK_DIR/initramfs/initrd.gz"
+
+echo "Building in $WORK_DIR"
+mkdir -p "$CONF_DIR" "$INITRAMFS_DIR"
+
+cat << EOM > "$CONF_DIR/initramfs.conf"
 MODULES=most
 BUSYBOX=auto
 KEYMAP=n
@@ -87,29 +140,32 @@ NFSROOT=auto
 RESUME=none
 EOM
 
-> $CONF_DIR/modules
-ln -s /etc/initramfs-tools/scripts $CONF_DIR
-mkdir $CONF_DIR/hooks
-cp "$WW_HOOKS_DIR/ww-hook" $CONF_DIR/hooks
+> "$CONF_DIR/modules"
+ln -s /etc/initramfs-tools/scripts "$CONF_DIR"
+mkdir "$CONF_DIR/hooks"
+cp "$WW_HOOKS_DIR/ww-hook" "$CONF_DIR/hooks"
 
-INITRD=$INITRAMFS_DIR/initrd.img-$(uname -r)
-/usr/sbin/mkinitramfs $VERBOSE_FLAG -d $CONF_DIR -o $INITRD
+/usr/sbin/mkinitramfs $VERBOSE_FLAG -d "$CONF_DIR" -o "$TMPINITRD"
+zcat "$TMPINITRD" > "$INITRD"
+echo "Built $INITRD"
+INITRD=$(realpath "$INITRD")
 
 if [ ! -z "$EXTRACT_DIR" ] ; then
    echo "Extracting to $EXTRACT_DIR"
    cd "$EXTRACT_DIR"
-   zcat $INITRD | cpio -id
+   cat "$INITRD" | cpio -id
    cd "$RUN_DIR"
 fi
 
 if [ $INSTALL -eq 1 ] ; then
-   if [ -f $WW_INITRAMFS_DIR/base ] ; then
-   	  echo "Backing up $WW_INITRAMFS_DIR/base to $WW_INITRAMFS_DIR/base.old"
-	  cp -a $WW_INITRAMFS_DIR/base $WW_INITRAMFS_DIR/base.old
+   echo "Installing $INITRD to $WW_INITRAMFS_DIR/base"	
+   if [ -f "$WW_INITRAMFS_DIR/base" ] ; then
+   	   echo "ERROR: installation target $WW_INITRAMFS_DIR/base already exists"
+	   exit 1
    fi
-   zcat $INITRD > $WW_INITRAMFS_DIR/base
+   cp "$INITRD" "$WW_INITRAMFS_DIR/base"
 fi
 
 if [ $KEEP_WORK -ne 1 ] ; then
-   rm -rf $WORK_DIR
+   rm -rf "$WORK_DIR"
 fi

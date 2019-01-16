@@ -7,6 +7,12 @@ Files: *
 Copyright: 2001-2003 Gregory M. Kurtzer
            2003-2011, The Regents of the University of California
 License: BSD-3-Clause
+
+Files: debian/*
+Copyright: 2019 System Fabric Works, Inc. <info@systemfabricworks.com>
+License: BSD-3-Clause
+
+License: BSD-3-Clause
  Warewulf Copyright (c) 2001-2003 Gregory M. Kurtzer
  .
  Warewulf Copyright (c) 2003-2011, The Regents of the University of
@@ -69,11 +75,3 @@ License: BSD-3-Clause
  the public, perform publicly and display publicly, and to permit others to
  do so.
 
-Files: debian/*
-Copyright: 2018 System Fabric Works, Inc.
-License: GPL-2
-
-License: GPL-2
- On Debian systems, the full text of the GNU General Public
- License version 2 can be found in the file
- '/usr/share/common-licenses/GPL-2'.
