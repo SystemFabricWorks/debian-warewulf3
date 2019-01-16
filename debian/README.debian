@@ -1,0 +1,19 @@
+warewulf3
+
+The Debian build of Warewulf differs from other builds in that the generated
+packages are architecture-independent. Thus, the warewulf3-provision package
+does not include an intrd image, which is required by the wwbootstrap script.
+
+Creation of the initramfs image is performed by an administrator, using the
+wwmkinitramfs script. This script uses the mkinitramfs command and a ww-hook
+script to pack required utilities, configs and kernel modules into an initrd
+image.
+
+Example:
+ $ sudo wwmkinitramfs
+
+This command will output the constructed initrd image to the current working
+directory. Specifying a "-i" flag will install the initrd image to the location
+used by wwbootstrap, /var/lib/warewulf/initramfs/ARCH/base.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 16 Jan 2019 13:53:49 -0600

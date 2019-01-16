@@ -1,0 +1,21 @@
+warewulf3
+
+This package is maintained from the upstream git repository located at
+https://github.com/warewulf/warewulf3.
+
+Upstream includes embedded code tarballs for unionfs-fuse, libarchive,
+parted, ipmitool, e2fsprogs, ipxe, impitool and busybox. These utilities
+are built without shared library dependencies to facilitate stuffing them
+in an initrd image. In order to better comply with Debian Policy and produce
+an architecture-independent build, the upstream tarball is repacked
+without those objects.
+
+d/gbp.conf configures the import-orig process to omit the embedded tarballs.
+Use the following command to repack and import a new upstream version:
+
+ $ gbp import-orig -u VERSION+ds1 ../path/to/upstream/tarball
+
+Refer to https://wiki.debian.org/DebianMentorsFaq, regarding the +ds version
+string extension.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 16 Jan 2019 13:42:01 -0600
