@@ -42,3 +42,5 @@ override_dh_auto_install:
 	$(MAKE) -C cluster DESTDIR=$(DESTDIR) install
 	install -m 0755 debian/wwmkinitramfs $(DESTDIR)/usr/bin
 	install -D -m 0755 debian/ww-hook $(DESTDIR)/usr/lib/warewulf/wwmkinitramfs/hooks/ww-hook
+	install -m 0755 provision/initramfs/initramfs.cpio $(DESTDIR)/var/lib/warewulf/initramfs/x86_64/base
+
