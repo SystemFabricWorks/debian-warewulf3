@@ -1,9 +1,9 @@
 Source: warewulf3
 Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
 Section: utils
-Priority: extra
+Priority: optional
 Standards-Version: 3.9.8
-Build-Depends: debhelper (>= 10),
+Build-Depends: debhelper-compat (= 13),
                dh-autoreconf,
 
 Package: warewulf3-cluster
