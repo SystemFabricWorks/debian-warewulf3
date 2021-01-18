@@ -1,6 +1,7 @@
 etc/warewulf/defaults/provision.conf
 etc/warewulf/livesync.conf
 etc/warewulf/provision.conf
+etc/warewulf/filesystem/examples/*.cmds
 usr/bin/wwlivesync
 usr/bin/wwmkinitramfs
 usr/bin/wwnodescan
