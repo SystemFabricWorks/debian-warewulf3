@@ -66,7 +66,7 @@
  MAINTAINERCLEANFILES = Makefile.in
 --- /dev/null
 +++ b/vnfs/libexec/wwmkchroot/debian-9.tmpl
-@@ -0,0 +1,16 @@
+@@ -0,0 +1,17 @@
 +#DESC: A base 64 bit Debian stretch chroot
 +
 +# The general Deb include has all of the necessary functions, but requires
@@ -80,7 +80,8 @@
 +
 +# Install additional packages with debootstrap
 +PKGLIST="openssh-server openssh-client isc-dhcp-client pciutils strace nfs-common \
-+ethtool iproute2 iputils-ping iputils-arping net-tools linux-image-amd64"
++ethtool iproute2 iputils-ping iputils-arping net-tools linux-image-amd64 \
++libterm-readline-gnu-perl dialog systemd-sysv"
 +
 +# vim:filetype=sh:syntax=sh:expandtab:ts=4:sw=4:
 --- a/vnfs/libexec/wwmkchroot/debian-8.tmpl
